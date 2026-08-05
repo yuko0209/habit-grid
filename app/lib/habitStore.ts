@@ -50,16 +50,7 @@ export function updateHabits(updater: (current: Habit[]) => Habit[]): void {
   emit();
 }
 
-const neverChanges = () => () => {};
-
-/**
- * False on the server and during hydration, true afterwards — the gate for
- * browser-only values such as "today".
- */
-export function useIsHydrated(): boolean {
-  return useSyncExternalStore(
-    neverChanges,
-    () => true,
-    () => false,
-  );
+/** Replaces everything — used when importing a backup. */
+export function replaceHabits(next: Habit[]): void {
+  updateHabits(() => next);
 }

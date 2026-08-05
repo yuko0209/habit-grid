@@ -1,10 +1,12 @@
 "use client";
 
 import AddHabitForm from "./AddHabitForm";
+import BackupControls from "./BackupControls";
 import HabitGrid from "./HabitGrid";
 import HabitRow from "./HabitRow";
-import { formatDateKey, startOfDay, toDateKey, type DateKey } from "@/app/lib/date";
-import { updateHabits, useHabits, useIsHydrated } from "@/app/lib/habitStore";
+import { formatDateKey, toDateKey, type DateKey } from "@/app/lib/date";
+import { useToday } from "@/app/lib/clock";
+import { updateHabits, useHabits } from "@/app/lib/habitStore";
 import {
   HABIT_COLORS,
   completedCount,
@@ -23,10 +25,9 @@ export default function HabitApp() {
   const habits = useHabits();
   const [selectedId, setSelectedId] = useState<string>(ALL);
 
-  // `today` depends on the visitor's clock and time zone, so it stays null
-  // until hydration finishes rather than risking a server/client mismatch.
-  const isHydrated = useIsHydrated();
-  const today = useMemo(() => (isHydrated ? startOfDay(new Date()) : null), [isHydrated]);
+  // Null until hydration finishes, so the visitor's clock and time zone can
+  // never disagree with the server render. Rolls over at midnight.
+  const today = useToday();
 
   const selected = habits.find((habit) => habit.id === selectedId) ?? null;
 
@@ -138,6 +139,15 @@ export default function HabitApp() {
         )}
 
         <AddHabitForm onAdd={handleAdd} suggestedColor={suggestedColor} />
+      </section>
+
+      <section className="flex flex-col gap-2 border-t border-zinc-200 pt-5 dark:border-zinc-800">
+        <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">バックアップ</h2>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          記録はこのブラウザにのみ保存されます。サイトデータを削除すると失われるので、
+          ときどき書き出しておくと安全です。
+        </p>
+        <BackupControls habits={habits} today={today} />
       </section>
     </div>
   );

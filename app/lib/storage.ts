@@ -2,7 +2,7 @@ import { HABIT_COLORS, type Habit, type HabitColor } from "./habits";
 
 const STORAGE_KEY = "habit-grid:v1";
 
-type StoredState = {
+export type StoredState = {
   version: 1;
   habits: Habit[];
 };
@@ -39,6 +39,25 @@ function parseHabit(value: unknown): Habit | null {
   };
 }
 
+/**
+ * Reads a `{ version, habits }` payload, from storage or from an imported
+ * file. Returns null when the payload isn't recognizable at all, so callers
+ * can tell "not our data" apart from "no habits yet".
+ */
+export function parseState(value: unknown): Habit[] | null {
+  if (typeof value !== "object" || value === null) return null;
+
+  const habits = (value as Partial<StoredState>).habits;
+  if (!Array.isArray(habits)) return null;
+
+  return habits.map(parseHabit).filter((habit): habit is Habit => habit !== null);
+}
+
+export function serializeState(habits: Habit[]): string {
+  const state: StoredState = { version: 1, habits };
+  return JSON.stringify(state, null, 2);
+}
+
 export function loadHabits(): Habit[] {
   if (typeof window === "undefined") return [];
 
@@ -46,13 +65,7 @@ export function loadHabits(): Habit[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
 
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) return [];
-
-    const habits = (parsed as Partial<StoredState>).habits;
-    if (!Array.isArray(habits)) return [];
-
-    return habits.map(parseHabit).filter((habit): habit is Habit => habit !== null);
+    return parseState(JSON.parse(raw)) ?? [];
   } catch {
     // Corrupt or unreadable storage (private mode, quota, bad JSON): start empty.
     return [];
@@ -63,8 +76,7 @@ export function saveHabits(habits: Habit[]): void {
   if (typeof window === "undefined") return;
 
   try {
-    const state: StoredState = { version: 1, habits };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, habits }));
   } catch {
     // Storage unavailable or full — the in-memory state stays usable.
   }
