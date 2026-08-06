@@ -25,6 +25,8 @@ pnpm build
 pnpm icons    # アイコン PNG を再生成（scripts/generate-icons.mjs）
 ```
 
+詳しい設計の経緯・注意点・今後のアイデアは [docs/overview.md](docs/overview.md) にまとめてあります。
+
 ## 構成
 
 | パス | 役割 |

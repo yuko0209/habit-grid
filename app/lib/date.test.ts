@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 
 describe("toDateKey", () => {
   it("uses local time rather than UTC", () => {
-    // 23:30 local on the 5th is already the 6th in UTC for JST.
+    // In JST, 08:00 on the 6th is still the 5th in UTC, so anything derived
+    // from toISOString() would report the wrong day every morning.
+    expect(toDateKey(new Date(2026, 7, 6, 8, 0))).toBe("2026-08-06");
     expect(toDateKey(new Date(2026, 7, 5, 23, 30))).toBe("2026-08-05");
   });
 
