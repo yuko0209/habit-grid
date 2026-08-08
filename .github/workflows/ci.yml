@@ -26,6 +26,11 @@ jobs:
 
       - run: pnpm lint
 
+      # `LayoutProps` and friends live in .next/types, which a fresh checkout
+      # does not have. Without this, tsc fails on app/layout.tsx even though
+      # the same command passes locally, where .next is left over from `dev`.
+      - run: pnpm exec next typegen
+
       - run: pnpm exec tsc --noEmit
 
       - run: pnpm test
