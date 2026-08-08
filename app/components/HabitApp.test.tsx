@@ -1,5 +1,5 @@
 import HabitApp from "./HabitApp";
-import { updateHabits } from "@/app/lib/habitStore";
+import { updateHabits } from "@/app/lib/habit-store";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";

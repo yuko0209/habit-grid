@@ -13,9 +13,22 @@ export type Habit = {
   dates: DateKey[];
 };
 
+/**
+ * `crypto.randomUUID` only exists in secure contexts, so it is missing when the
+ * app is opened over plain http — e.g. `http://192.168.x.x:3000` while checking
+ * the layout on a phone. The fallback adds randomness because a timestamp alone
+ * collides for two habits added in the same millisecond.
+ */
+function createId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function createHabit(name: string, color: HabitColor, today: Date): Habit {
   return {
-    id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    id: createId(),
     name: name.trim(),
     color,
     createdAt: toDateKey(today),
@@ -66,14 +79,26 @@ export function longestStreak(habit: Habit): number {
   return longest;
 }
 
-/** Share of the last `days` days (ending today) that were completed, 0–1. */
+/**
+ * How many days the rate is measured over: `days`, or the habit's whole life
+ * if it is younger than that. Without this, a habit created yesterday and
+ * completed both days would read 7% instead of 100%.
+ */
+export function completionWindow(habit: Habit, today: Date, days: number): number {
+  const age = daysBetween(fromDateKey(habit.createdAt), today) + 1;
+  return Math.max(1, Math.min(days, age));
+}
+
+/** Share of the trailing window (ending today) that was completed, 0–1. */
 export function completionRate(habit: Habit, today: Date, days: number): number {
+  const window = completionWindow(habit, today, days);
   const done = new Set(habit.dates);
+
   let hits = 0;
-  for (let i = 0; i < days; i += 1) {
+  for (let i = 0; i < window; i += 1) {
     if (done.has(toDateKey(addDays(today, -i)))) hits += 1;
   }
-  return hits / days;
+  return hits / window;
 }
 
 /**

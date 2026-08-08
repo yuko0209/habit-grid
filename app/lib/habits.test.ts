@@ -1,6 +1,7 @@
 import {
   completedCount,
   completionRate,
+  completionWindow,
   createHabit,
   currentStreak,
   intensityLevel,
@@ -103,6 +104,21 @@ describe("longestStreak", () => {
   });
 });
 
+describe("completionWindow", () => {
+  it("is the full window for a habit older than it", () => {
+    expect(completionWindow(habit([]), TODAY, 30)).toBe(30);
+  });
+
+  it("shrinks to the habit's age while it is younger", () => {
+    // Created 2026-08-03, today 2026-08-05 → the habit has existed 3 days.
+    expect(completionWindow(habit([], { createdAt: "2026-08-03" }), TODAY, 30)).toBe(3);
+  });
+
+  it("is never zero, even on the day the habit is created", () => {
+    expect(completionWindow(habit([], { createdAt: "2026-08-05" }), TODAY, 30)).toBe(1);
+  });
+});
+
 describe("completionRate", () => {
   it("is the share of the trailing window that was completed", () => {
     const dates = ["2026-08-05", "2026-08-04", "2026-08-03", "2026-08-02", "2026-08-01"];
@@ -112,6 +128,21 @@ describe("completionRate", () => {
 
   it("ignores days outside the window", () => {
     expect(completionRate(habit(["2026-01-01"]), TODAY, 30)).toBe(0);
+  });
+
+  it("does not punish a habit for days before it existed", () => {
+    // Created two days ago and completed on both days plus today: 3/3, not 3/30.
+    const young = habit(["2026-08-03", "2026-08-04", "2026-08-05"], {
+      createdAt: "2026-08-03",
+    });
+
+    expect(completionRate(young, TODAY, 30)).toBe(1);
+  });
+
+  it("still counts missed days within a young habit's life", () => {
+    const young = habit(["2026-08-05"], { createdAt: "2026-08-03" });
+
+    expect(completionRate(young, TODAY, 30)).toBeCloseTo(1 / 3);
   });
 });
 

@@ -5,7 +5,11 @@ import { cellClass } from "@/app/lib/colors";
 import type { HabitColor } from "@/app/lib/habits";
 import { useMemo } from "react";
 
-const WEEKS = 27;
+/**
+ * Roughly half a year. Wide enough to show a habit taking hold, and still
+ * legible on a phone without the grid scrolling by default.
+ */
+export const GRID_WEEKS = 27;
 
 /** Only Mon/Wed/Fri are labelled, as in GitHub's contribution graph. */
 const WEEKDAY_LABELS = ["", "月", "", "水", "", "金", ""];
@@ -22,7 +26,7 @@ type Props = {
 };
 
 export default function HabitGrid({ today, color, levelFor, labelFor, onToggle }: Props) {
-  const grid = useMemo(() => buildGrid(today, WEEKS), [today]);
+  const grid = useMemo(() => buildGrid(today, GRID_WEEKS), [today]);
   const months = useMemo(() => monthLabels(grid), [grid]);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 

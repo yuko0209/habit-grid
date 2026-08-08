@@ -1,6 +1,6 @@
 import BackupControls from "./BackupControls";
 import { serializeState } from "@/app/lib/storage";
-import { updateHabits } from "@/app/lib/habitStore";
+import { updateHabits } from "@/app/lib/habit-store";
 import type { Habit } from "@/app/lib/habits";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

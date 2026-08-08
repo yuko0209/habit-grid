@@ -1,7 +1,7 @@
 "use client";
 
 import { downloadBackup, readBackup } from "@/app/lib/backup";
-import { replaceHabits } from "@/app/lib/habitStore";
+import { replaceHabits } from "@/app/lib/habit-store";
 import type { Habit } from "@/app/lib/habits";
 import { useRef, useState, type ChangeEvent } from "react";
 

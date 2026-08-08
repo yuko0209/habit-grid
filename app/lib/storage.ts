@@ -2,7 +2,7 @@ import { HABIT_COLORS, type Habit, type HabitColor } from "./habits";
 
 const STORAGE_KEY = "habit-grid:v1";
 
-export type StoredState = {
+type StoredState = {
   version: 1;
   habits: Habit[];
 };

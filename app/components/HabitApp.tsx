@@ -6,7 +6,7 @@ import HabitGrid from "./HabitGrid";
 import HabitRow from "./HabitRow";
 import { formatDateKey, toDateKey, type DateKey } from "@/app/lib/date";
 import { useToday } from "@/app/lib/clock";
-import { updateHabits, useHabits } from "@/app/lib/habitStore";
+import { updateHabits, useHabits } from "@/app/lib/habit-store";
 import {
   HABIT_COLORS,
   completedCount,
@@ -19,11 +19,10 @@ import {
 } from "@/app/lib/habits";
 import { useCallback, useMemo, useState } from "react";
 
-const ALL = "__all__";
-
 export default function HabitApp() {
   const habits = useHabits();
-  const [selectedId, setSelectedId] = useState<string>(ALL);
+  // null means the "all habits" overview rather than a single habit.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Null until hydration finishes, so the visitor's clock and time zone can
   // never disagree with the server render. Rolls over at midnight.
@@ -48,7 +47,7 @@ export default function HabitApp() {
   const handleDelete = useCallback((habit: Habit) => {
     if (!window.confirm(`「${habit.name}」を削除しますか？記録も消えます。`)) return;
     updateHabits((current) => current.filter((item) => item.id !== habit.id));
-    setSelectedId((current) => (current === habit.id ? ALL : current));
+    setSelectedId((current) => (current === habit.id ? null : current));
   }, []);
 
   const levelFor = useCallback(
@@ -89,8 +88,8 @@ export default function HabitApp() {
           <div className="flex flex-wrap gap-1.5">
             <TabButton
               label="すべて"
-              isActive={selectedId === ALL}
-              onClick={() => setSelectedId(ALL)}
+              isActive={selectedId === null}
+              onClick={() => setSelectedId(null)}
             />
             {habits.map((habit) => (
               <TabButton

@@ -8,7 +8,7 @@
 
 export type DateKey = string;
 
-export const DAY_MS = 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function toDateKey(date: Date): DateKey {
   const year = date.getFullYear();

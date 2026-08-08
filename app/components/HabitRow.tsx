@@ -2,7 +2,14 @@
 
 import { SWATCH_CLASS } from "@/app/lib/colors";
 import { toDateKey } from "@/app/lib/date";
-import { completionRate, currentStreak, isDone, longestStreak, type Habit } from "@/app/lib/habits";
+import {
+  completionRate,
+  completionWindow,
+  currentStreak,
+  isDone,
+  longestStreak,
+  type Habit,
+} from "@/app/lib/habits";
 
 type Props = {
   habit: Habit;
@@ -24,6 +31,9 @@ export default function HabitRow({
   const doneToday = isDone(habit, toDateKey(today));
   const streak = currentStreak(habit, today);
   const best = longestStreak(habit);
+  // Young habits are measured over their whole life, so the label has to say
+  // which window the percentage actually refers to.
+  const window = completionWindow(habit, today, 30);
   const rate = Math.round(completionRate(habit, today, 30) * 100);
 
   return (
@@ -62,7 +72,7 @@ export default function HabitRow({
           <span>🔥 継続 {streak}日</span>
           <span>最長 {best}日</span>
           <span>合計 {habit.dates.length}日</span>
-          <span>直近30日 {rate}%</span>
+          <span>直近{window}日 {rate}%</span>
         </div>
       </button>
 
