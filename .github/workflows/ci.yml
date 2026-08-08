@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Pinned to the version used locally: the icon check below compares
+          # bytes from zlib, whose output can differ between Node releases.
+          node-version: 20
+          # Caches the pnpm store, which needs pnpm to be installed first.
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm exec tsc --noEmit
+
+      - run: pnpm test
+
+      - run: pnpm build
+
+      # The icons are committed, so a drift here means the generator and the
+      # checked-in PNGs disagree.
+      - name: Verify generated icons are up to date
+        run: |
+          pnpm icons
+          git diff --exit-code -- app/icon.png app/apple-icon.png public/icon-*.png

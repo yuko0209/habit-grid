@@ -63,7 +63,7 @@ app/
     date.ts                   日付キーとグリッド生成
     habits.ts                 習慣モデルと継続日数などの純粋関数
     storage.ts                localStorage 読み書き + 検証
-    habitStore.ts             習慣データの外部ストア
+    habit-store.ts            習慣データの外部ストア
     clock.ts                  「今日」の外部ストア
     backup.ts                 JSON の書き出し・読み込み
 scripts/
@@ -75,7 +75,7 @@ scripts/
 ```mermaid
 flowchart TD
     LS[(localStorage<br/>habit-grid:v1)]
-    Store[habitStore.ts<br/>useSyncExternalStore]
+    Store[habit-store.ts<br/>useSyncExternalStore]
     Clock[clock.ts<br/>今日 / 深夜0時に更新]
     App[HabitApp.tsx]
     UI[HabitGrid / HabitRow /<br/>AddHabitForm / BackupControls]
@@ -95,7 +95,7 @@ flowchart TD
 
 ```ts
 type Habit = {
-  id: string          // crypto.randomUUID()
+  id: string          // crypto.randomUUID()。非セキュアな http では乱数にフォールバック
   name: string
   color: "green" | "blue" | "purple" | "amber" | "rose"
   createdAt: string   // "YYYY-MM-DD"
@@ -161,7 +161,7 @@ CSS に出力されない。`app/lib/colors.ts` に全パターンを literal �
 ## 5. テスト
 
 ```bash
-pnpm test        # 66件
+pnpm test        # 71件
 ```
 
 | ファイル | 守っているもの |
@@ -182,10 +182,13 @@ pnpm test        # 66件
 
 ## 6. デプロイ
 
+- 本番: https://habit-grid-9yb4.vercel.app
 - **GitHub にプッシュすると Vercel が自動でビルド・公開する。** Vercel 側の操作は不要
 - プラン: **Hobby（無料）**。サーバー関数もDBも使っていないので、無料枠を消費しない
   - Hobby は上限を超えても課金されず、停止するだけ。有料化は手動アップグレードが必要
-- リポジトリ: `yuko0209/habit-grid`（private）
+- リポジトリ: `yuko0209/habit-grid`（public）
+- push すると GitHub Actions（`.github/workflows/ci.yml`）で lint / 型チェック / テスト /
+  ビルド / アイコンの差分確認が走る
 
 ```bash
 git add -A
@@ -217,8 +220,8 @@ git push          # → 1〜2分で本番に反映
 4. **リマインダー通知** — PWA なので Web Push は技術的には可能。ただし iOS はホーム画面追加が前提で、
    通知の許可まわりが面倒。効果は大きい
 5. **複数端末での同期** — ここだけは設計が変わる。Supabase などを足して
-   `habitStore.ts` の裏側を差し替える形になる。UI とロジック（`lib/habits.ts`）は
-   そのまま使えるはずで、`storage.ts` / `habitStore.ts` の2ファイルが交換対象
+   `habit-store.ts` の裏側を差し替える形になる。UI とロジック（`lib/habits.ts`）は
+   そのまま使えるはずで、`storage.ts` / `habit-store.ts` の2ファイルが交換対象
 
 いずれの場合も、`app/lib/` の純粋関数にはテストがあるので、そこを壊していないかは
 `pnpm test` ですぐ分かる。
