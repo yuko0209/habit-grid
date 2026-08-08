@@ -1,5 +1,7 @@
 # Habit Grid
 
+[![CI](https://github.com/yuko0209/habit-grid/actions/workflows/ci.yml/badge.svg)](https://github.com/yuko0209/habit-grid/actions/workflows/ci.yml)
+
 毎日の習慣を GitHub の contribution graph 風のグリッドで記録するトラッカー。
 データはブラウザの `localStorage` にのみ保存され、サーバーには送信されません。
 
