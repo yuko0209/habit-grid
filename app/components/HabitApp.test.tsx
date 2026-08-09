@@ -85,6 +85,33 @@ describe("HabitApp", () => {
     confirmSpy.mockRestore();
   });
 
+  it("shows the ranking only once a second habit exists", async () => {
+    const user = userEvent.setup();
+    render(<HabitApp />);
+
+    await addHabit(user, "筋トレ");
+    expect(screen.queryByRole("heading", { name: /^ランキング/ })).not.toBeInTheDocument();
+
+    await addHabit(user, "読書");
+    expect(screen.getByRole("heading", { name: /^ランキング/ })).toBeInTheDocument();
+  });
+
+  it("ranks the habit checked today above one that is not", async () => {
+    const user = userEvent.setup();
+    render(<HabitApp />);
+    await addHabit(user, "筋トレ");
+    await addHabit(user, "読書");
+
+    await user.click(screen.getByRole("button", { name: /読書 を今日達成にする/ }));
+
+    const ranking = screen.getByRole("list", { name: /ランキング/ });
+    const entries = within(ranking).getAllByRole("listitem");
+
+    expect(within(entries[0]).getByText("読書")).toBeInTheDocument();
+    expect(within(entries[0]).getByText(/^1 \/ \d+日$/)).toBeInTheDocument();
+    expect(within(entries[1]).getByText("筋トレ")).toBeInTheDocument();
+  });
+
   it("makes grid cells clickable only when a single habit is selected", async () => {
     const user = userEvent.setup();
     render(<HabitApp />);

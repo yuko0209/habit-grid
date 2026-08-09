@@ -24,6 +24,7 @@
 | 過去の編集 | 習慣タブに切り替えると、グリッドのセルを直接クリックできる |
 | 全体ヒートマップ | 「すべて」タブ。その日に達成した習慣の割合を5段階の濃さで表示 |
 | 統計 | 継続日数（現在／最長）、合計日数、直近30日の達成率 |
+| ランキング | 今月の順位。達成日数／継続日数で切り替え、同率対応、先月比つき |
 | バックアップ | JSON でエクスポート／インポート |
 | PWA | ホーム画面に追加してスタンドアロン起動 |
 
@@ -59,12 +60,14 @@ app/
     HabitRow.tsx              習慣1行（今日のチェック + 統計）
     AddHabitForm.tsx          追加フォーム
     BackupControls.tsx        エクスポート／インポート
+    HabitRanking.tsx          今月のランキング
   lib/
     date.ts                   日付キーとグリッド生成
     habits.ts                 習慣モデルと継続日数などの純粋関数
     storage.ts                localStorage 読み書き + 検証
     habit-store.ts            習慣データの外部ストア
     clock.ts                  「今日」の外部ストア
+    ranking.ts                月次の順位付けと先月比
     backup.ts                 JSON の書き出し・読み込み
 scripts/
   generate-icons.mjs          アイコン PNG を生成（依存ライブラリなし）
@@ -161,7 +164,7 @@ CSS に出力されない。`app/lib/colors.ts` に全パターンを literal �
 ## 5. テスト
 
 ```bash
-pnpm test        # 71件
+pnpm test        # 112件
 ```
 
 | ファイル | 守っているもの |
@@ -171,6 +174,7 @@ pnpm test        # 71件
 | `storage.test.ts` | 壊れたデータ・不正な色・重複日付を捨てること |
 | `clock.test.ts` | 深夜0時のロールオーバー、タブ復帰時の追従（フェイクタイマー） |
 | `backup.test.ts` | エクスポート／インポートの往復、壊れたファイルの拒否 |
+| `ranking.test.ts` | 同率の順位、期間に対する割合、先月比、今月作成の扱い |
 | `HabitApp.test.tsx` | 追加 → チェック → 永続化 → 削除、グリッドの編集可否 |
 | `AddHabitForm.test.tsx` | 入力・色選択・送信 |
 | `BackupControls.test.tsx` | ダウンロード、確認ダイアログ、エラー表示 |

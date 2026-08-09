@@ -3,6 +3,7 @@
 import AddHabitForm from "./AddHabitForm";
 import BackupControls from "./BackupControls";
 import HabitGrid from "./HabitGrid";
+import HabitRanking from "./HabitRanking";
 import HabitRow from "./HabitRow";
 import { formatDateKey, toDateKey, type DateKey } from "@/app/lib/date";
 import { useToday } from "@/app/lib/clock";
@@ -139,6 +140,8 @@ export default function HabitApp() {
 
         <AddHabitForm onAdd={handleAdd} suggestedColor={suggestedColor} />
       </section>
+
+      <HabitRanking habits={habits} today={today} />
 
       <section className="flex flex-col gap-2 border-t border-zinc-200 pt-5 dark:border-zinc-800">
         <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">バックアップ</h2>

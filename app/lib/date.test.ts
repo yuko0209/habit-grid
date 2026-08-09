@@ -1,4 +1,15 @@
-import { buildGrid, daysBetween, fromDateKey, monthLabels, startOfWeek, toDateKey } from "./date";
+import {
+  addMonths,
+  buildGrid,
+  daysBetween,
+  endOfMonth,
+  fromDateKey,
+  monthLabels,
+  monthPeriod,
+  startOfMonth,
+  startOfWeek,
+  toDateKey,
+} from "./date";
 import { describe, expect, it } from "vitest";
 
 describe("toDateKey", () => {
@@ -77,5 +88,66 @@ describe("monthLabels", () => {
     // No month is ever labelled twice in a row.
     const filled = labels.filter(Boolean);
     expect(new Set(filled).size).toBe(filled.length);
+  });
+});
+
+describe("startOfMonth / endOfMonth", () => {
+  it("finds the first and last day of the month", () => {
+    expect(toDateKey(startOfMonth(new Date(2026, 7, 9)))).toBe("2026-08-01");
+    expect(toDateKey(endOfMonth(new Date(2026, 7, 9)))).toBe("2026-08-31");
+  });
+
+  it("handles a short month", () => {
+    expect(toDateKey(endOfMonth(new Date(2026, 1, 10)))).toBe("2026-02-28");
+  });
+
+  it("handles a leap year", () => {
+    expect(toDateKey(endOfMonth(new Date(2028, 1, 10)))).toBe("2028-02-29");
+  });
+});
+
+describe("addMonths", () => {
+  it("returns the first of the shifted month", () => {
+    expect(toDateKey(addMonths(new Date(2026, 7, 9), -1))).toBe("2026-07-01");
+  });
+
+  it("does not overflow when the target month is shorter", () => {
+    // Naively subtracting a month from March 31 lands back in March,
+    // because February 31 does not exist.
+    expect(toDateKey(addMonths(new Date(2026, 2, 31), -1))).toBe("2026-02-01");
+  });
+
+  it("crosses a year boundary", () => {
+    expect(toDateKey(addMonths(new Date(2026, 0, 15), -1))).toBe("2025-12-01");
+  });
+});
+
+describe("monthPeriod", () => {
+  const today = new Date(2026, 7, 9);
+
+  it("ends the current month at today, not at the last of the month", () => {
+    const period = monthPeriod(today, 0);
+
+    expect(period.start).toBe("2026-08-01");
+    expect(period.end).toBe("2026-08-09");
+    expect(period.days).toBe(9);
+    expect(period.label).toBe("8月");
+  });
+
+  it("covers a past month in full", () => {
+    const period = monthPeriod(today, -1);
+
+    expect(period.start).toBe("2026-07-01");
+    expect(period.end).toBe("2026-07-31");
+    expect(period.days).toBe(31);
+    expect(period.label).toBe("7月");
+  });
+
+  it("is a single day on the first of the month", () => {
+    expect(monthPeriod(new Date(2026, 7, 1), 0).days).toBe(1);
+  });
+
+  it("covers the whole month on its last day", () => {
+    expect(monthPeriod(new Date(2026, 7, 31), 0).days).toBe(31);
   });
 });
