@@ -1,6 +1,7 @@
 "use client";
 
 import AddHabitForm from "./AddHabitForm";
+import AIInsight from "./AIInsight";
 import BackupControls from "./BackupControls";
 import HabitGrid from "./HabitGrid";
 import HabitRanking from "./HabitRanking";
@@ -114,6 +115,8 @@ export default function HabitApp() {
           onToggle={selected ? (key) => handleToggle(selected.id, key) : undefined}
         />
       </section>
+
+      <AIInsight habits={habits} today={today} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">習慣</h2>

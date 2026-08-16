@@ -3,7 +3,7 @@
 [![CI](https://github.com/yuko0209/habit-grid/actions/workflows/ci.yml/badge.svg)](https://github.com/yuko0209/habit-grid/actions/workflows/ci.yml)
 
 毎日の習慣を GitHub の contribution graph 風のグリッドで記録するトラッカー。
-データはブラウザの `localStorage` にのみ保存され、サーバーには送信されません。
+データはブラウザの `localStorage` にのみ保存されます。AIの「今日のひとこと」機能を使ったときだけ、集計値（習慣名・継続日数・達成率）がAPIに送信されます。
 
 **デモ: https://habit-grid-9yb4.vercel.app**
 アカウント登録は不要です。開いてすぐ試せます。
@@ -80,6 +80,8 @@ pnpm icons    # アイコン PNG を再生成（scripts/generate-icons.mjs）
   タブが再表示されたときにも時計を読み直す。
 - localStorage はオリジンごとに分かれるので、`localhost` と本番 URL で記録は共有されない。
   端末やドメインをまたぐときはエクスポート／インポートを使う。
+- AIによる「今日のひとこと」機能のみ例外で、習慣名・継続日数・達成率の集計値をGroq API（無料枠、
+  入力・出力を学習に利用しない方針）に送信する。ボタンを押したときのみ送信され、日付ごとの記録は送らない。
 
 ## 苦労した点・工夫した点
 
