@@ -48,14 +48,20 @@ function buildPrompt(habits: HabitStat[]): string {
 export async function POST(request: Request) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "AI機能が設定されていません。" }, { status: 503 });
+    return NextResponse.json(
+      { error: "AI機能が設定されていません。" },
+      { status: 503 },
+    );
   }
 
   let body: { habits?: unknown };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "リクエストが不正です。" }, { status: 400 });
+    return NextResponse.json(
+      { error: "リクエストが不正です。" },
+      { status: 400 },
+    );
   }
 
   if (
@@ -64,36 +70,54 @@ export async function POST(request: Request) {
     body.habits.length > MAX_HABITS ||
     !body.habits.every(isValidHabit)
   ) {
-    return NextResponse.json({ error: "リクエストが不正です。" }, { status: 400 });
+    return NextResponse.json(
+      { error: "リクエストが不正です。" },
+      { status: 400 },
+    );
   }
 
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+        model: "groq/compound",
         max_tokens: 300,
-        messages: [{ role: "user", content: buildPrompt(body.habits as HabitStat[]) }],
-      }),
-    });
+          messages: [
+            { role: "user", content: buildPrompt(body.habits as HabitStat[]) },
+          ],
+        }),
+      },
+    );
 
     if (!response.ok) {
-      return NextResponse.json({ error: "AIからの応答に失敗しました。" }, { status: 502 });
+      return NextResponse.json(
+        { error: "AIからの応答に失敗しました。" },
+        { status: 502 },
+      );
     }
 
     const data = await response.json();
-    const text: string | undefined = data.choices?.[0]?.message?.content?.trim();
+    const text: string | undefined =
+      data.choices?.[0]?.message?.content?.trim();
 
     if (!text) {
-      return NextResponse.json({ error: "AIからの応答に失敗しました。" }, { status: 502 });
+      return NextResponse.json(
+        { error: "AIからの応答に失敗しました。" },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({ text });
   } catch {
-    return NextResponse.json({ error: "AIからの応答に失敗しました。" }, { status: 502 });
+    return NextResponse.json(
+      { error: "AIからの応答に失敗しました。" },
+      { status: 502 },
+    );
   }
 }

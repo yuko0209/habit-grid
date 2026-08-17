@@ -57,6 +57,9 @@ app/
   layout.tsx                  metadata / viewport / themeColor
   manifest.ts                 PWA マニフェスト
   icon.png, apple-icon.png    生成物（scripts/generate-icons.mjs）
+  api/
+    insight/route.ts          AI要約のサーバー関数。Groq API への中継専用。
+                               GROQ_API_KEY はここにしか置かない
   components/
     HabitApp.tsx              状態を束ねるクライアントのルート
     HabitGrid.tsx             ヒートマップの描画
@@ -64,6 +67,7 @@ app/
     AddHabitForm.tsx          追加フォーム
     BackupControls.tsx        エクスポート／インポート
     HabitRanking.tsx          今月のランキング
+    AIInsight.tsx             「今日のひとこと」カード
   lib/
     date.ts                   日付キーとグリッド生成
     habits.ts                 習慣モデルと継続日数などの純粋関数
@@ -72,6 +76,7 @@ app/
     clock.ts                  「今日」の外部ストア
     ranking.ts                月次の順位付けと先月比
     backup.ts                 JSON の書き出し・読み込み
+    insight.ts                AI要約に送る集計値を組み立てる純粋関数（dates は含めない）
 scripts/
   generate-icons.mjs          アイコン PNG を生成（依存ライブラリなし）
 ```
@@ -96,6 +101,10 @@ flowchart TD
 
 ポイントは **localStorage を「Reactの外にある store」として扱っている**こと。
 `useEffect` で state に写していないので、読み込み用・保存用の effect が存在しない。
+
+AI要約だけは別経路: `AIInsight.tsx` がボタン操作を受けて `insight.ts` で集計値を作り、
+`/api/insight` → Groq API と1往復するだけ。localStorage には結果のテキストだけを
+その日のキャッシュとして書き戻す（`habit-grid:insight:YYYY-MM-DD`）。
 
 ### データの形
 
@@ -233,6 +242,78 @@ git push          # → 1〜2分で本番に反映
 5. **複数端末での同期** — ここだけは設計が変わる。Supabase などを足して
    `habit-store.ts` の裏側を差し替える形になる。UI とロジック（`lib/habits.ts`）は
    そのまま使えるはずで、`storage.ts` / `habit-store.ts` の2ファイルが交換対象
+
+いずれの場合も、`app/lib/` の純粋関数にはテストがあるので、そこを壊していないかは
+`pnpm test` ですぐ分かる。
+
+---
+
+## 9. よく使うコマンド
+
+```bash
+pnpm dev          # 開発サーバー http://localhost:3000
+pnpm test         # テスト
+pnpm test:watch   # 監視モード
+pnpm lint         # ESLint
+pnpm build        # 本番ビルド（デプロイ前の確認用）
+pnpm icons        # アイコン PNG の再生成
+```
+
+`AGENTS.md` は `next dev` が自動生成・再生成するファイルなので、消しても復活する。
+コミットに含めておけば差分が出ない。
+## 6. デプロイ
+
+- 本番: https://habit-grid-9yb4.vercel.app
+- **GitHub にプッシュすると Vercel が自動でビルド・公開する。** Vercel 側の操作は不要
+- プラン: **Hobby（無料）**。DBは使っていない。サーバー関数は `/api/insight` の1つだけで、
+  呼び出し頻度も低いので無料枠には余裕がある
+  - Hobby は上限を超えても課金されず、停止するだけ。有料化は手動アップグレードが必要
+- **環境変数 `GROQ_API_KEY` が必要。** ローカルは `.env.local`、本番は Vercel の
+  Project Settings → Environment Variables に同じ値を登録する（両方に設定しないと
+  AI要約だけ動かない状態になる）
+- リポジトリ: `yuko0209/habit-grid`（public）
+- push すると GitHub Actions（`.github/workflows/ci.yml`）で lint / 型チェック / テスト /
+  ビルド / アイコンの差分確認が走る
+
+```bash
+git add -A
+git commit -m "..."
+git push          # → 1〜2分で本番に反映
+```
+
+---
+
+## 7. 注意点
+
+**localStorage はオリジン（ドメイン+ポート）ごとに分かれる。**
+`http://localhost:3000` と本番URLでは記録が共有されない。開発中に付けた記録は本番に出てこないし、
+その逆もない。移したいときはエクスポート／インポートを使う。
+
+**バックアップが唯一の保険。** サイトデータの削除、ホーム画面アプリの削除、端末変更で記録は消える。
+
+**複数端末で同期はできない。** localStorage 構成の必然。同期したければバックエンドが要る（下記）。
+
+---
+
+## 8. 次にやるとしたら
+
+手をつけやすい順:
+
+1. **習慣の並べ替え・名前の編集** — いまは追加順で固定、名前も変更できない
+2. **記録の一括操作** — 「昨日の分をまとめて付ける」など。旅行明けに欲しくなるはず
+3. **週次・月次のサマリー** — 「今週 5/7 達成」のような表示
+4. **リマインダー通知** — いまは iOS の「ショートカット」アプリで代用している（[reminder.md](./reminder.md)）。
+   アプリ側で実装するなら Web Push になるが、iOS には時刻指定のローカル通知がないため
+   push を送るサーバーが要る。Service Worker + VAPID 鍵 + 購読情報の保管場所 + 定期実行の
+   4点セットが必要で、「バックエンドなし・全ページ静的」という前提が崩れる。
+   Vercel Hobby の Cron は1日1回・指定時刻から1時間以内の精度なので、そこも要検討。
+   やる価値が出るのは「未記録の日だけ鳴らす」が欲しくなったとき
+5. **複数端末での同期** — ここだけは設計が変わる。Supabase などを足して
+   `habit-store.ts` の裏側を差し替える形になる。UI とロジック（`lib/habits.ts`）は
+   そのまま使えるはずで、`storage.ts` / `habit-store.ts` の2ファイルが交換対象
+6. **`/api/insight` の乱用対策** — 今は誰でも叩ける状態。個人利用の範囲では実害は薄いが、
+   デモURLがどこかで広まった場合、Groq の無料枠の上限に達して自分が使えなくなるのが
+   一番あり得るリスク。気になったら Vercel の Firewall でのレート制限を検討する
 
 いずれの場合も、`app/lib/` の純粋関数にはテストがあるので、そこを壊していないかは
 `pnpm test` ですぐ分かる。
