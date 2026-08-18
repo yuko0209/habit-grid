@@ -1,6 +1,18 @@
-import { addDays, daysBetween, fromDateKey, toDateKey, type DateKey } from "./date";
+import {
+  addDays,
+  daysBetween,
+  fromDateKey,
+  toDateKey,
+  type DateKey,
+} from "./date";
 
-export const HABIT_COLORS = ["green", "blue", "purple", "amber", "rose"] as const;
+export const HABIT_COLORS = [
+  "green",
+  "blue",
+  "purple",
+  "amber",
+  "rose",
+] as const;
 
 export type HabitColor = (typeof HABIT_COLORS)[number];
 
@@ -20,13 +32,20 @@ export type Habit = {
  * collides for two habits added in the same millisecond.
  */
 function createId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createHabit(name: string, color: HabitColor, today: Date): Habit {
+export function createHabit(
+  name: string,
+  color: HabitColor,
+  today: Date,
+): Habit {
   return {
     id: createId(),
     name: name.trim(),
@@ -84,13 +103,21 @@ export function longestStreak(habit: Habit): number {
  * if it is younger than that. Without this, a habit created yesterday and
  * completed both days would read 7% instead of 100%.
  */
-export function completionWindow(habit: Habit, today: Date, days: number): number {
+export function completionWindow(
+  habit: Habit,
+  today: Date,
+  days: number,
+): number {
   const age = daysBetween(fromDateKey(habit.createdAt), today) + 1;
   return Math.max(1, Math.min(days, age));
 }
 
 /** Share of the trailing window (ending today) that was completed, 0–1. */
-export function completionRate(habit: Habit, today: Date, days: number): number {
+export function completionRate(
+  habit: Habit,
+  today: Date,
+  days: number,
+): number {
   const window = completionWindow(habit, today, days);
   const done = new Set(habit.dates);
 
@@ -105,7 +132,10 @@ export function completionRate(habit: Habit, today: Date, days: number): number 
  * Heatmap intensity for a day, as a level from 0 (none) to 4 (all habits).
  * With a single habit selected this collapses to "empty or full".
  */
-export function intensityLevel(completed: number, total: number): 0 | 1 | 2 | 3 | 4 {
+export function intensityLevel(
+  completed: number,
+  total: number,
+): 0 | 1 | 2 | 3 | 4 {
   if (total === 0 || completed === 0) return 0;
   if (completed >= total) return 4;
   const ratio = completed / total;
@@ -116,5 +146,28 @@ export function intensityLevel(completed: number, total: number): 0 | 1 | 2 | 3 
 
 /** How many of `habits` were completed on the given day. */
 export function completedCount(habits: Habit[], key: DateKey): number {
-  return habits.reduce((count, habit) => (isDone(habit, key) ? count + 1 : count), 0);
+  return habits.reduce(
+    (count, habit) => (isDone(habit, key) ? count + 1 : count),
+    0,
+  );
+}
+
+/** Updates a habit's name and color. */
+export function editHabit(habit: Habit, name: string, color: HabitColor): Habit {
+  return {
+    ...habit,
+    name: name.trim(),
+    color,
+  };
+}
+
+/** Moves a habit at `index` up or down in the array. */
+export function reorderHabits(habits: Habit[], index: number, direction: "up" | "down"): Habit[] {
+  if (direction === "up" && index === 0) return habits;
+  if (direction === "down" && index === habits.length - 1) return habits;
+  const next = [...habits];
+  const targetIndex = direction === "up" ? index - 1 : index + 1;
+  const [temp] = next.splice(index, 1);
+  next.splice(targetIndex, 0, temp);
+  return next;
 }

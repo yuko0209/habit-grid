@@ -16,6 +16,8 @@ import {
   intensityLevel,
   isDone,
   toggleDate,
+  editHabit,
+  reorderHabits,
   type Habit,
   type HabitColor,
 } from "@/app/lib/habits";
@@ -50,6 +52,16 @@ export default function HabitApp() {
     if (!window.confirm(`「${habit.name}」を削除しますか？記録も消えます。`)) return;
     updateHabits((current) => current.filter((item) => item.id !== habit.id));
     setSelectedId((current) => (current === habit.id ? null : current));
+  }, []);
+
+  const handleEdit = useCallback((habitId: string, name: string, color: HabitColor) => {
+    updateHabits((current) =>
+      current.map((habit) => (habit.id === habitId ? editHabit(habit, name, color) : habit)),
+    );
+  }, []);
+
+  const handleMove = useCallback((index: number, direction: "up" | "down") => {
+    updateHabits((current) => reorderHabits(current, index, direction));
   }, []);
 
   const levelFor = useCallback(
@@ -127,7 +139,7 @@ export default function HabitApp() {
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {habits.map((habit) => (
+            {habits.map((habit, index) => (
               <HabitRow
                 key={habit.id}
                 habit={habit}
@@ -136,6 +148,11 @@ export default function HabitApp() {
                 onSelect={() => setSelectedId(habit.id)}
                 onToggleToday={() => handleToggle(habit.id, toDateKey(today))}
                 onDelete={() => handleDelete(habit)}
+                onEdit={(name, color) => handleEdit(habit.id, name, color)}
+                onMoveUp={index > 0 ? () => handleMove(index, "up") : undefined}
+                onMoveDown={
+                  index < habits.length - 1 ? () => handleMove(index, "down") : undefined
+                }
               />
             ))}
           </ul>

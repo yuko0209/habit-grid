@@ -8,6 +8,8 @@ import {
   isDone,
   longestStreak,
   toggleDate,
+  editHabit,
+  reorderHabits,
   type Habit,
 } from "./habits";
 import { describe, expect, it } from "vitest";
@@ -179,5 +181,40 @@ describe("isDone", () => {
   it("reports whether a specific day is recorded", () => {
     expect(isDone(habit(["2026-08-05"]), "2026-08-05")).toBe(true);
     expect(isDone(habit(["2026-08-05"]), "2026-08-04")).toBe(false);
+  });
+});
+
+describe("editHabit", () => {
+  it("updates the name and color of the habit", () => {
+    const original = habit([], { name: "読書", color: "green" });
+    const updated = editHabit(original, "  毎日の読書  ", "blue");
+    expect(updated.name).toBe("毎日の読書");
+    expect(updated.color).toBe("blue");
+    expect(updated.id).toBe(original.id);
+  });
+});
+
+describe("reorderHabits", () => {
+  it("moves a habit up or down", () => {
+    const habitsList = [
+      habit([], { id: "1" }),
+      habit([], { id: "2" }),
+      habit([], { id: "3" }),
+    ];
+    // Move "2" up (index 1 to 0)
+    const upResult = reorderHabits(habitsList, 1, "up");
+    expect(upResult.map((h) => h.id)).toEqual(["2", "1", "3"]);
+
+    // Move "2" down (index 1 to 2)
+    const downResult = reorderHabits(habitsList, 1, "down");
+    expect(downResult.map((h) => h.id)).toEqual(["1", "3", "2"]);
+
+    // Boundary: move top habit up
+    const noChangeUp = reorderHabits(habitsList, 0, "up");
+    expect(noChangeUp).toBe(habitsList);
+
+    // Boundary: move bottom habit down
+    const noChangeDown = reorderHabits(habitsList, 2, "down");
+    expect(noChangeDown).toBe(habitsList);
   });
 });

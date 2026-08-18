@@ -128,4 +128,54 @@ describe("HabitApp", () => {
     await user.click(cells.at(-1)!);
     expect(within(screen.getByRole("listitem")).getByText("合計 1日")).toBeInTheDocument();
   });
+
+  it("edits a habit name and color", async () => {
+    const user = userEvent.setup();
+    render(<HabitApp />);
+    await addHabit(user, "筋トレ");
+
+    await user.click(screen.getByRole("button", { name: "編集" }));
+
+    const input = screen.getByPlaceholderText("習慣名");
+    await user.clear(input);
+    await user.type(input, "新しい筋トレ");
+
+    // Select blue color swatch
+    await user.click(screen.getByLabelText("blueを選択"));
+    await user.click(screen.getByRole("button", { name: "保存" }));
+
+    const row = screen.getByRole("listitem");
+    expect(within(row).getByText("新しい筋トレ")).toBeInTheDocument();
+  });
+
+  it("reorders habits up and down", async () => {
+    const user = userEvent.setup();
+    render(<HabitApp />);
+    await addHabit(user, "習慣A");
+    await addHabit(user, "習慣B");
+    await addHabit(user, "習慣C");
+
+    const rowsBefore = screen.getAllByRole("listitem");
+    expect(within(rowsBefore[0]).getByText("習慣A")).toBeInTheDocument();
+    expect(within(rowsBefore[1]).getByText("習慣B")).toBeInTheDocument();
+    expect(within(rowsBefore[2]).getByText("習慣C")).toBeInTheDocument();
+
+    // Click "up" on "習慣B"
+    const upButtonB = within(rowsBefore[1]).getByRole("button", { name: "上に移動" });
+    await user.click(upButtonB);
+
+    const rowsAfterUp = screen.getAllByRole("listitem");
+    expect(within(rowsAfterUp[0]).getByText("習慣B")).toBeInTheDocument();
+    expect(within(rowsAfterUp[1]).getByText("習慣A")).toBeInTheDocument();
+    expect(within(rowsAfterUp[2]).getByText("習慣C")).toBeInTheDocument();
+
+    // Click "down" on "習慣B"
+    const downButtonB = within(rowsAfterUp[0]).getByRole("button", { name: "下に移動" });
+    await user.click(downButtonB);
+
+    const rowsAfterDown = screen.getAllByRole("listitem");
+    expect(within(rowsAfterDown[0]).getByText("習慣A")).toBeInTheDocument();
+    expect(within(rowsAfterDown[1]).getByText("習慣B")).toBeInTheDocument();
+    expect(within(rowsAfterDown[2]).getByText("習慣C")).toBeInTheDocument();
+  });
 });
