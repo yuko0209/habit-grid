@@ -3,7 +3,7 @@
 import { buildGrid, monthLabels, toDateKey, type DateKey } from "@/app/lib/date";
 import { cellClass } from "@/app/lib/colors";
 import type { HabitColor } from "@/app/lib/habits";
-import { useMemo } from "react";
+import { useMemo, useRef, useLayoutEffect } from "react";
 
 /**
  * Roughly half a year. Wide enough to show a habit taking hold, and still
@@ -30,8 +30,22 @@ export default function HabitGrid({ today, color, levelFor, labelFor, onToggle }
   const months = useMemo(() => monthLabels(grid), [grid]);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastScrolledDateRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const currentDateKey = toDateKey(today);
+    if (lastScrolledDateRef.current !== currentDateKey) {
+      container.scrollLeft = container.scrollWidth - container.clientWidth;
+      lastScrolledDateRef.current = currentDateKey;
+    }
+  }, [today]);
+
   return (
-    <div className="overflow-x-auto pb-1">
+    <div ref={containerRef} className="overflow-x-auto pb-1">
       <div className="inline-flex flex-col gap-1">
         <div className="flex gap-[3px] pl-7">
           {months.map((month, index) => (
